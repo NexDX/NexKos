@@ -36,6 +36,7 @@ async function bootstrap() {
       'http://localhost:3000',
       'https://g5xqwfz1-3000.asse.devtunnels.ms',
       'https://nex-kos.vercel.app',
+      'https://85xlx9xl-3000.asse.devtunnels.ms',
     ],
     credentials: true,
   });
