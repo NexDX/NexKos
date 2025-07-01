@@ -101,7 +101,7 @@ export class DashboardService {
     if (monthPeriod) {
       // Parse the monthPeriod string (expected format: YYYY-MM)
       const [year, monthNum] = monthPeriod.split('-').map(Number);
-      startOfMonth = new Date(year, monthNum - 1, 1);
+      startOfMonth = new Date(year, monthNum, 1);
       endOfMonth = new Date(year, monthNum, 0);
     } else {
       // If no monthPeriod provided, use current monthPeriod
@@ -122,20 +122,6 @@ export class DashboardService {
       endDate: IsNull(),
     });
 
-    const totalBillsCreated = await this.billService.count({
-      isDeleted: false,
-      billingPeriod: Between(
-        startOfMonth.toISOString().slice(0, 7),
-        endOfMonth.toISOString().slice(0, 7),
-      ),
-    });
-
-    const totalPayments = await this.paymentRepository.sum('amountPaid', {
-      isDeleted: false,
-      paymentDate: Between(startOfMonth, endOfMonth),
-      status: PaymentStatus.Diterima,
-    });
-
     const bills = await this.billRepository.find({
       where: {
         isDeleted: false,
@@ -148,12 +134,24 @@ export class DashboardService {
       relations: ['payments'],
     });
 
+    const totalBillsCreated = bills.length;
+
     const totalUnpaidBills = bills.reduce((total, bill) => {
       const totalPaid = bill.payments.reduce(
         (sum, payment) => sum + Number(payment.amountPaid),
         0,
       );
       return total + (Number(bill.totalAmount) - totalPaid);
+    }, 0);
+
+    const totalPayments = bills.reduce((total, bill) => {
+      return (
+        total +
+        bill.payments.reduce(
+          (sum, payment) => sum + Number(payment.amountPaid),
+          0,
+        )
+      );
     }, 0);
 
     return {
